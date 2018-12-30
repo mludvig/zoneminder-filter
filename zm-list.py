@@ -53,11 +53,13 @@ class ZmFiles():
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--monitor-id', type=int, help='ZoneMinder MonitorId')
-    parser.add_argument('--start-event', type=int, help='First EventId to process')
     parser.add_argument('--url', type=str, required=True, help='Base ZoneMinder API URL, e.g. https://server/zm/api')
+    parser.add_argument('--monitor-id', type=int, help='ZoneMinder MonitorId. Required unless --start-event is used.')
+    parser.add_argument('--start-event', type=int, help='First EventId to process. Not required if using --monitor-id.')
     parser.add_argument('--dry-run', action='store_const', const=True, default=False, help='Do not delete events.')
     args = parser.parse_args()
+    if args.monitor_id is None and args.start_event is None:
+        parser.error("Either --monitor-id or --start-event is required.")
     return args
 
 if __name__ == "__main__":
@@ -69,7 +71,7 @@ if __name__ == "__main__":
     if args.start_event:
         event_id = args.start_event
     else:
-        monitor_index = zma.get_index(monitor_id = 4)
+        monitor_index = zma.get_index(monitor_id = args.monitor_id)
         event_id = monitor_index['events'][0]['Event']['Id']
 
     while event_id:
