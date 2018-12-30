@@ -53,15 +53,18 @@ class ZmFiles():
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--monitor-id', type=int, help='ZoneMinder MonitorId')
     parser.add_argument('--start-event', type=int, help='First EventId to process')
+    parser.add_argument('--url', type=str, required=True, help='Base ZoneMinder API URL, e.g. https://server/zm/api')
+    parser.add_argument('--dry-run', action='store_const', const=True, default=False, help='Do not delete events.')
     args = parser.parse_args()
     return args
 
 if __name__ == "__main__":
-    zma = ZmApi("https://172.31.174.9/zm/api")
+    args = parse_args()
+    zma = ZmApi(args.url)
     zmf = ZmFiles("/var/lib/zoneminder", zma)
     rek = RekognitionHelper(size = (800,800))
-    args = parse_args()
 
     if args.start_event:
         event_id = args.start_event
@@ -87,8 +90,11 @@ if __name__ == "__main__":
                 print("    # skipping further checks")
                 break
         if delete:
-            print("DELETING %(Id)s" % event)
-            zma.delete_event("%(Id)s" % event)
+            if not args.dry_run:
+                print("DELETING %(Id)s" % event)
+                zma.delete_event("%(Id)s" % event)
+            else:
+                print("DELETING %(Id)s [dry-run]" % event)
         else:
             print("RETAINING %(Id)s" % event)
         print()
