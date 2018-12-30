@@ -4,6 +4,7 @@ import os
 import glob
 import json
 import requests
+import argparse
 
 from rekognition import RekognitionHelper
 
@@ -50,13 +51,24 @@ class ZmFiles():
                 break
         return frames
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--start-event', type=int, help='First EventId to process')
+    args = parser.parse_args()
+    return args
+
 if __name__ == "__main__":
     zma = ZmApi("https://172.31.174.9/zm/api")
     zmf = ZmFiles("/var/lib/zoneminder", zma)
     rek = RekognitionHelper(size = (800,800))
+    args = parse_args()
 
-    idx = zma.get_index(monitor_id = 4)
-    event_id = idx['events'][0]['Event']['Id']
+    if args.start_event:
+        event_id = args.start_event
+    else:
+        monitor_index = zma.get_index(monitor_id = 4)
+        event_id = monitor_index['events'][0]['Event']['Id']
+
     while event_id:
         delete = True
         event = zma.get_event(event_id)['event']['Event']
