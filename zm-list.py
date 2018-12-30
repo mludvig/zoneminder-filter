@@ -80,7 +80,12 @@ if __name__ == "__main__":
         print("%(Id)s - %(StartTime)s - %(Frames)-6s" % event)
         frames = zmf.frames(event = event)
         for frame in frames:
-            labels = rek.get_labels(frame)
+            try:
+                labels = rek.get_labels(frame)
+            except Exception as e:
+                print("    # %s   - (%s)" % (frame, str(e)), flush = True)
+                continue
+
             labels_names = ",".join([label['Name'] for label in labels['labels']]) or "-"
 
             if labels['mode'] == 'rekognition':
