@@ -76,9 +76,13 @@ if __name__ == "__main__":
         frames = zmf.frames(event = event)
         for frame in frames:
             labels = rek.get_labels(frame)
-            labels_names = ",".join([label['Name'] for label in labels])
-            print("    %s  %s" % (frame, labels_names or "-"), flush = True)
-            if labels:
+            labels_names = ",".join([label['Name'] for label in labels['labels']]) or "-"
+
+            if labels['mode'] == 'rekognition':
+                print("    %s  %s" % (frame, labels_names), flush = True)
+            elif labels['mode'] == 'imagehash':
+                print("    # %s   %s (same image hash)" % (frame, labels_names), flush = True)
+            if labels['labels']:
                 delete = False
                 print("    # skipping further checks")
                 break

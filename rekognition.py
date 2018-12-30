@@ -15,8 +15,8 @@ class RekognitionHelper():
 
         image_hash = str(imagehash.phash(image))
         if image_hash == self._last_image_hash:
-            print("    # %s -- same image hash" % file_name)
-            return self._last_labels
+            #print("    # %s -- same image hash" % file_name)
+            return { 'labels': self._last_labels, 'mode': 'imagehash', 'hash': image_hash }
 
         thumb = image.copy()
         thumb.thumbnail(self.size, Image.ANTIALIAS)
@@ -44,7 +44,7 @@ class RekognitionHelper():
         self._last_image_hash = image_hash
         self._last_labels = labels
 
-        return labels
+        return { 'labels': labels, 'mode': 'rekognition', 'hash': image_hash }
 
     def _tmp_get_boxes():
         for label in response['Labels']:
