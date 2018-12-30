@@ -1,14 +1,22 @@
 import io
 import boto3
 from PIL import Image
+import imagehash
 
 class RekognitionHelper():
     def __init__(self, size):
         self.client = boto3.client('rekognition')
         self.size = size
+        self._last_image_hash = ""
+        self._last_labels = []
 
     def get_labels(self, file_name, only_labels = [], with_instances = True, min_confidence = 90):
         image = Image.open(file_name)
+
+        image_hash = str(imagehash.phash(image))
+        if image_hash == self._last_image_hash:
+            print("    # %s -- same image hash" % file_name)
+            return self._last_labels
 
         thumb = image.copy()
         thumb.thumbnail(self.size, Image.ANTIALIAS)
@@ -32,6 +40,9 @@ class RekognitionHelper():
 
         if with_instances:
             labels = [label for label in labels if label['Instances']]
+
+        self._last_image_hash = image_hash
+        self._last_labels = labels
 
         return labels
 
