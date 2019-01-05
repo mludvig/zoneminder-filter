@@ -56,10 +56,13 @@ def parse_args():
     parser.add_argument('--url', type=str, required=True, help='Base ZoneMinder API URL, e.g. https://server/zm/api')
     parser.add_argument('--monitor-id', type=int, help='ZoneMinder MonitorId. Required unless --start-event is used.')
     parser.add_argument('--start-event', type=int, help='First EventId to process. Not required if using --monitor-id.')
+    parser.add_argument('--exclude-labels', type=str, action='append', default=[], help='Ignore listed labels.')
     parser.add_argument('--dry-run', action='store_const', const=True, default=False, help='Do not delete events.')
     args = parser.parse_args()
     if args.monitor_id is None and args.start_event is None:
         parser.error("Either --monitor-id or --start-event is required.")
+    if args.exclude_labels:
+        args.exclude_labels = ",".join(args.exclude_labels).split(",")
     return args
 
 if __name__ == "__main__":
@@ -81,7 +84,7 @@ if __name__ == "__main__":
         frames = zmf.frames(event = event)
         for frame in frames:
             try:
-                labels = rek.get_labels(frame)
+                labels = rek.get_labels(frame, exclude_labels = args.exclude_labels)
             except Exception as e:
                 print("    # %s   - (%s)" % (frame, str(e)), flush = True)
                 continue

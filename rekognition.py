@@ -10,7 +10,7 @@ class RekognitionHelper():
         self._last_image_hash = ""
         self._last_labels = []
 
-    def get_labels(self, file_name, only_labels = [], with_instances = True, min_confidence = 90):
+    def get_labels(self, file_name, exclude_labels = [], only_labels = [], with_instances = True, min_confidence = 90):
         image = Image.open(file_name)
 
         image_hash = str(imagehash.phash(image))
@@ -34,6 +34,9 @@ class RekognitionHelper():
         )
 
         labels = response['Labels']
+
+        if exclude_labels:
+            labels = [label for label in labels if label['Name'] not in exclude_labels]
 
         if only_labels:
             labels = [label for label in labels if label['Name'] in only_labels]
