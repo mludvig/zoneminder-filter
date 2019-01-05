@@ -5,7 +5,7 @@ import imagehash
 
 class RekognitionHelper():
     def __init__(self, size):
-        self.client = boto3.client('rekognition')
+        self.client = boto3.client('rekognition', region_name='us-west-2')      # us-west-2 (Oregon) is much cheaper than Sydney!
         self.size = size
         self._last_image_hash = ""
         self._last_labels = []
