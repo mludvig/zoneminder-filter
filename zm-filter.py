@@ -62,9 +62,23 @@ class DateTimeArgument():
             raise argparse.ArgumentTypeError('Unable to parse date/time string: {}'.format(value))
         return dt
 
+class DirArgument():
+    def __init__(self, subdir = None):
+        self._subdir = subdir
+    def __call__(self, value):
+        check_path = value
+        if self._subdir:
+            check_path = os.path.join(check_path, self._subdir)
+        if not os.path.isdir(check_path):
+            raise argparse.ArgumentTypeError('Not a directory: {}'.format(check_path))
+        if not os.access(check_path, os.X_OK):
+            raise argparse.ArgumentTypeError('Unable to open: {}'.format(check_path))
+        return value
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--url', type=str, required=True, help='Base ZoneMinder API URL, e.g. https://server/zm/api')
+    parser.add_argument('--zm-dir', type=DirArgument('events'), required=True, help='Base ZoneMinder directory, e.g. /var/lib/zoneminder. Must contain "events" subdirectory.')
     parser.add_argument('--monitor-id', type=int, required=True, help='ZoneMinder MonitorId.')
     parser.add_argument('--start-event', type=int, help='First EventId to process. Not required if using --start-time.')
     parser.add_argument('--start-time', type=DateTimeArgument(), help='Time stamp of the first event to process. Not required if using --start-event.')
@@ -80,7 +94,7 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     zma = ZmApi(args.url)
-    zmf = ZmFiles("/var/lib/zoneminder", zma)
+    zmf = ZmFiles(args.zm_dir, zma)
     rek = RekognitionHelper(size = (800,800))
 
     if args.start_event:
