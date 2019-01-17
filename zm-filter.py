@@ -121,9 +121,9 @@ if __name__ == "__main__":
             labels_names = ",".join([label['Name'] for label in labels['labels']]) or "-"
 
             if labels['mode'] == 'rekognition':
-                print("    %s  %s" % (frame, labels_names), flush = True)
+                print("    %s     %s (new image hash: %s)" % (frame, labels_names, labels['hash']), flush = True)
             elif labels['mode'] == 'imagehash':
-                print("    # %s   %s (same image hash)" % (frame, labels_names), flush = True)
+                print("    # %s   %s (known image hash: %s)" % (frame, labels_names, labels['hash']), flush = True)
             if labels['labels']:
                 delete = False
                 print("    # skipping further checks")
