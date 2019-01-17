@@ -7,16 +7,14 @@ class RekognitionHelper():
     def __init__(self, size):
         self.client = boto3.client('rekognition', region_name='us-west-2')      # us-west-2 (Oregon) is much cheaper than Sydney!
         self.size = size
-        self._last_image_hash = ""
-        self._last_labels = []
+        self._hash_labels = {}
 
     def get_labels(self, file_name, ignore_labels = [], only_labels = [], with_instances = True, min_confidence = 90):
         image = Image.open(file_name)
 
         image_hash = str(imagehash.phash(image))
-        if image_hash == self._last_image_hash:
-            #print("    # %s -- same image hash" % file_name)
-            return { 'labels': self._last_labels, 'mode': 'imagehash', 'hash': image_hash }
+        if image_hash in self._hash_labels:
+            return { 'labels': self._hash_labels[image_hash], 'mode': 'imagehash', 'hash': image_hash }
 
         thumb = image.copy()
         thumb.thumbnail(self.size, Image.ANTIALIAS)
@@ -44,8 +42,7 @@ class RekognitionHelper():
         if with_instances:
             labels = [label for label in labels if label['Instances']]
 
-        self._last_image_hash = image_hash
-        self._last_labels = labels
+        self._hash_labels[image_hash] = labels
 
         return { 'labels': labels, 'mode': 'rekognition', 'hash': image_hash }
 
