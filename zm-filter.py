@@ -5,6 +5,7 @@ import glob
 import json
 import requests
 import argparse
+import dateparser
 
 from rekognition import RekognitionHelper
 
@@ -12,8 +13,11 @@ class ZmApi():
     def __init__(self, api_base_url):
         self.base = api_base_url
 
-    def get_index(self, monitor_id):
-        url = "%s/events/index/MonitorId:%d.json" % (self.base, monitor_id)
+    def get_index(self, monitor_id, start_time = None):
+        url = "%s/events/index/MonitorId:%d" % (self.base, monitor_id)
+        if start_time:
+            url += "/StartTime >=:{}".format(start_time.strftime('%Y-%m-%d %H:%M:%S'))
+        url += ".json"
         r = requests.get(url, verify=False)
         return json.loads(r.text)
 
@@ -51,16 +55,24 @@ class ZmFiles():
                 break
         return frames
 
+class DateTimeArgument():
+    def __call__(self, value):
+        dt = dateparser.parse(value)
+        if not dt:
+            raise argparse.ArgumentTypeError('Unable to parse date/time string: {}'.format(value))
+        return dt
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--url', type=str, required=True, help='Base ZoneMinder API URL, e.g. https://server/zm/api')
-    parser.add_argument('--monitor-id', type=int, help='ZoneMinder MonitorId. Required unless --start-event is used.')
-    parser.add_argument('--start-event', type=int, help='First EventId to process. Not required if using --monitor-id.')
+    parser.add_argument('--monitor-id', type=int, required=True, help='ZoneMinder MonitorId.')
+    parser.add_argument('--start-event', type=int, help='First EventId to process. Not required if using --start-time.')
+    parser.add_argument('--start-time', type=DateTimeArgument(), help='Time stamp of the first event to process. Not required if using --start-event.')
     parser.add_argument('--ignore-labels', type=str, action='append', default=[], help='Ignore listed labels.')
     parser.add_argument('--dry-run', action='store_const', const=True, default=False, help='Do not delete events.')
     args = parser.parse_args()
-    if args.monitor_id is None and args.start_event is None:
-        parser.error("Either --monitor-id or --start-event is required.")
+    if args.start_event is None and args.start_time is None:
+        parser.error("Either --start-event or --start-time is required.")
     if args.ignore_labels:
         args.ignore_labels = ",".join(args.ignore_labels).split(",")
     return args
@@ -73,6 +85,9 @@ if __name__ == "__main__":
 
     if args.start_event:
         event_id = args.start_event
+    elif args.start_time:
+        monitor_index = zma.get_index(monitor_id = args.monitor_id, start_time = args.start_time)
+        event_id = monitor_index['events'][0]['Event']['Id']
     else:
         monitor_index = zma.get_index(monitor_id = args.monitor_id)
         event_id = monitor_index['events'][0]['Event']['Id']
