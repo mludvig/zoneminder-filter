@@ -2,12 +2,17 @@ import io
 import boto3
 from PIL import Image
 import imagehash
+import shelve
 
 class RekognitionHelper():
-    def __init__(self, size):
+    def __init__(self, size, shelve_file = None):
         self.client = boto3.client('rekognition', region_name='us-west-2')      # us-west-2 (Oregon) is much cheaper than Sydney!
         self.size = size
-        self._hash_labels = {}
+        if shelve_file:
+            print('Persistent image hash store: {}'.format(shelve_file))
+            self._hash_labels = shelve.open(shelve_file, 'c')
+        else:
+            self._hash_labels = {}
 
     def get_labels(self, file_name, ignore_labels = [], only_labels = [], with_instances = True, min_confidence = 90):
         image = Image.open(file_name)
@@ -43,6 +48,10 @@ class RekognitionHelper():
             labels = [label for label in labels if label['Instances']]
 
         self._hash_labels[image_hash] = labels
+
+        if type(self._hash_labels) == shelve.DbfilenameShelf:
+            # This only makes sense when we use 'shelve'
+            self._hash_labels.sync()
 
         return { 'labels': labels, 'mode': 'rekognition', 'hash': image_hash }
 

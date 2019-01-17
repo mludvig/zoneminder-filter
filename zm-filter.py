@@ -79,6 +79,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--url', type=str, required=True, help='Base ZoneMinder API URL, e.g. https://server/zm/api')
     parser.add_argument('--zm-dir', type=DirArgument('events'), required=True, help='Base ZoneMinder directory, e.g. /var/lib/zoneminder. Must contain "events" subdirectory.')
+    parser.add_argument('--hash-db', type=str, help='Filename for persistent image hashes storage. Optional.')
     parser.add_argument('--monitor-id', type=int, required=True, help='ZoneMinder MonitorId.')
     parser.add_argument('--start-event', type=int, help='First EventId to process. Not required if using --start-time.')
     parser.add_argument('--start-time', type=DateTimeArgument(), help='Time stamp of the first event to process. Not required if using --start-event.')
@@ -95,7 +96,7 @@ if __name__ == "__main__":
     args = parse_args()
     zma = ZmApi(args.url)
     zmf = ZmFiles(args.zm_dir, zma)
-    rek = RekognitionHelper(size = (800,800))
+    rek = RekognitionHelper(size = (800,800), shelve_file = args.hash_db)
 
     if args.start_event:
         event_id = args.start_event
